@@ -1,27 +1,38 @@
-const express = require('express');
-const morgan = require('morgan');
-const axios = require('axios');
-require('dotenv').config();
+ const express = require('express');
+ const morgan = require('morgan');
+ const axios = require('axios');
 
-const api_key = process.env.API_KEY;
+ const PORT = 3000;
 
-const PORT = process.env.PORT || 3000;
+ const app = express();
+ const API_KEY = '4d3174bd';
+ app.use(morgan('dev'));
 
-const app = express();
+ //  set up empty cache
+ let cache = {};
 
-app.use(morgan('dev'));
-// When making calls to the OMDB API make sure to append the '&apikey=8730e0e' parameter
+ app.get('/', (req, res) => {
+     let reqURL = req.url;
+     let omdbURL = 'http://www.omdbapi.com' + reqURL + '&apikey=' + API_KEY;
 
-app.get('/?i=tt3896198', function(req, res) {
-    res.status(200).send('http://www.omdbapi.com/?i=tt3896198&apikey=4d3174bd')
-})
+     //  if the url is in the cache
+     if (cache.hasOwnProperty(reqURL)) {
+         //  fetch data from cache
+         console.log(cache);
+         res.json(cache[reqURL]);
+     } else {
+         //  get data from the OMBD
+         axios.get(omdbURL)
+             .then((response) => {
+                 console.log(cache[reqURL])
+                 cache[reqURL] = response.data;
+                 res.json(cache[reqURL]);
+             })
+             .catch(error => {
+                 console.log("ERROR!", error);
+             });
+         res.status(200);
+     }
+ });
 
-app.get('/?t=baby%20driver', function(req, res) {
-    res.status(200).send('http://www.omdbapi.com/?t=baby%20driver&apikey=4d3174bd')
-}); 
-
-// app.get(`?i=${api_key}`, function(req, res) {
-//     res.
-// })
-
-module.exports = app;
+ module.exports = app;
